@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SelfBase</title>
+<meta name="description" content="自架主機的資料庫管家：一個 API 備份所有 PostgreSQL、照規則清掉舊備份、需要時一鍵還原，順便看一眼 Redis 還活著沒。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+/* Hero object: a continuous-feed printout of one backup run. */
+.runlog {
+  width: 100%; max-width: 360px; background: var(--object); color: var(--object-ink);
+  font-family: var(--font-mono); font-size: 12.5px; line-height: 1.7;
+  padding: 22px 34px 26px; position: relative;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 18px 40px -18px rgba(20, 40, 30, .35);
+  transform: rotate(1deg);
+  /* tractor-feed holes on both edges */
+  -webkit-mask:
+    radial-gradient(circle 4px at 13px 50%, transparent 97%, #000) left / 26px 18px repeat-y,
+    radial-gradient(circle 4px at 13px 50%, transparent 97%, #000) right / 26px 18px repeat-y,
+    linear-gradient(#000, #000) center / calc(100% - 52px) 100% no-repeat;
+          mask:
+    radial-gradient(circle 4px at 13px 50%, transparent 97%, #000) left / 26px 18px repeat-y,
+    radial-gradient(circle 4px at 13px 50%, transparent 97%, #000) right / 26px 18px repeat-y,
+    linear-gradient(#000, #000) center / calc(100% - 52px) 100% no-repeat;
+}
+.runlog::before {
+  content: ""; position: absolute; inset: 0 26px; pointer-events: none;
+  background: repeating-linear-gradient(transparent 0 42px, rgba(15, 122, 92, .06) 42px 84px);
+  border-inline: 1px dashed rgba(38, 48, 44, .18);
+}
+.runlog > * { position: relative; }
+.runlog .brand { font-weight: 600; letter-spacing: 0.24em; font-size: 13.5px; }
+.runlog .sub { font-size: 11px; opacity: .65; }
+.runlog hr { border: 0; border-top: 1.5px dashed rgba(38, 48, 44, .35); margin: 10px 0; }
+.runlog .cmd { font-weight: 600; }
+.runlog .cmd::before { content: "$ "; opacity: .45; }
+.runlog .job { display: grid; grid-template-columns: 1.2em minmax(0, 1fr) auto; gap: 0 6px; }
+.runlog .job i { font-style: normal; font-weight: 600; }
+.runlog .ok i { color: #0f7a5c; }
+.runlog .bad i, .runlog .bad .meta { color: #b3261e; }
+.runlog .file { grid-column: 2 / 4; font-size: 11px; opacity: .6; overflow-wrap: anywhere; }
+.runlog .meta { text-align: right; white-space: nowrap; }
+.runlog .row { display: flex; justify-content: space-between; gap: 12px; }
+.runlog .row span:first-child { opacity: .6; flex: none; }
+.runlog .row span:last-child { text-align: right; min-width: 0; overflow-wrap: anywhere; }
+.runlog .sum { font-weight: 600; font-size: 14px; }
+.runlog .end { text-align: center; margin-top: 4px; opacity: .55; letter-spacing: .18em; font-size: 11px; }
+@media (max-width: 380px) {
+  .runlog { font-size: 11.5px; padding-inline: 30px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .runlog { animation: feed 1s cubic-bezier(.2,.7,.25,1) both; }
+  @keyframes feed { from { transform: rotate(1deg) translateY(-16px); opacity: 0; } to { transform: rotate(1deg); opacity: 1; } }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topbar" aria-label="網站">
+    <a href="../">← Jeffrey 的專案</a>
+    <div class="links"><a href="https://github.com/Jeffrey0117/SelfBase">GitHub 原始碼</a></div>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <div class="eyebrow">自架主機的資料庫管家</div>
+      <h1>資料庫備份，<br>交給一個 API。</h1>
+      <p class="lede">自己架 PostgreSQL，最常出事的不是資料庫本身，是「上次備份是什麼時候？」。SelfBase 把備份、清舊檔、還原和健康檢查收成一個小服務：排程器每天戳它一下，它把每個資料庫都 dump 下來、記好帳，舊的照規則清掉。</p>
+      <div class="facts" aria-label="專案數字">
+        <div class="fact"><b>15</b><span>個 API 端點</span></div>
+        <div class="fact"><b>1</b><span>個執行期依賴</span></div>
+        <div class="fact"><b>10 / 30</b><span>份 · 天 預設保留</span></div>
+      </div>
+      <p class="asof">數字截至 2026-11-07</p>
+    </div>
+    <div class="object-col">
+      <div class="runlog" role="img" aria-label="範例紀錄：一次夜間備份，兩個資料庫成功、一個失敗但不影響其他，接著清掉三份舊備份，最後讀取 Redis 記憶體用量">
+        <div class="brand">SELFBASE</div>
+        <div class="sub">2026-11-07 03:00 · 夜間備份 · 範例</div>
+        <hr>
+        <div class="cmd">POST /api/backup/all</div>
+        <div class="job ok"><i>✓</i><span>shop</span><span class="meta">48.2 MB · 12.4 s</span><span class="file">shop_20261107_030000.dump</span></div>
+        <div class="job ok"><i>✓</i><span>blog</span><span class="meta">6.7 MB · 2.1 s</span><span class="file">blog_20261107_030000.dump</span></div>
+        <div class="job bad"><i>✗</i><span>legacy</span><span class="meta">failed</span><span class="file">連線失敗，錯誤訊息記進紀錄，其他照跑</span></div>
+        <hr>
+        <div class="cmd">POST /api/cleanup</div>
+        <div class="row"><span>規則</span><span>每庫留 10 份 · 30 天內</span></div>
+        <div class="row sum"><span>deleted</span><span>3</span></div>
+        <hr>
+        <div class="cmd">GET /api/redis/health</div>
+        <div class="row"><span>status</span><span>connected</span></div>
+        <div class="row"><span>memory</span><span>2.13M（peak 3.40M）</span></div>
+        <div class="row"><span>clients</span><span>4</span></div>
+        <hr>
+        <div class="end">— END OF RUN —</div>
+      </div>
+      <p class="object-note">示意紀錄：欄位取自 API 實際回傳，數值是範例</p>
+    </div>
+  </header>
+
+  <section aria-labelledby="caps-h">
+    <div class="sec-head">
+      <h2 id="caps-h">它幫你顧的事</h2>
+      <p>都是「平常沒人想做、出事才後悔沒做」的那幾件。</p>
+    </div>
+    <div class="caps">
+      <div class="cap"><h3>一次備份全部</h3><p>一個請求把所有登記的資料庫同時 dump 下來。其中一個失敗，其他照樣完成，結果逐筆回報。</p><span class="tag">POST /api/backup/all</span></div>
+      <div class="cap"><h3>舊備份自己清</h3><p>每個資料庫只留最近 10 份、30 天內的備份，失敗紀錄超過 7 天也一併清掉。數字都能改。</p><span class="tag">retention</span></div>
+      <div class="cap"><h3>一鍵還原</h3><p>指定一份完成的備份就能還原，也可以還原到另一個資料庫，先在副本上確認再動正式的。</p><span class="tag">pg_restore --clean</span></div>
+      <div class="cap"><h3>每份備份都有帳</h3><p>檔名、大小、花了幾毫秒、成功或失敗的錯誤訊息，全記在本機 SQLite，隨時查得到。</p><span class="tag">running → completed</span></div>
+      <div class="cap"><h3>看一眼資料庫</h3><p>資料庫多大、現在幾條連線、最大的 20 張表各佔多少空間和幾筆資料，加上最後一次成功備份。</p><span class="tag">GET /api/pg/stats</span></div>
+      <div class="cap"><h3>Redis 還活著嗎</h3><p>PING 之後讀 INFO：版本、記憶體用量與高峰、連線數、命中與未命中次數。</p><span class="tag">GET /api/redis/health</span></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="flow-h">
+    <div class="sec-head">
+      <h2 id="flow-h">一次夜間備份怎麼跑</h2>
+      <p>SelfBase 本身不帶計時器，由你現有的排程器（cron、工作排程器、PM2 之類）定時呼叫。</p>
+    </div>
+    <ol class="flow">
+      <li><div><b>排程器戳一下</b><span>帶著 Bearer token 呼叫 <code>POST /api/backup/all</code>。沒設 token 的服務一律拒絕，不會變成誰都能打。</span></div></li>
+      <li><div><b>逐庫跑 pg_dump</b><span>找出所有啟用中的資料庫，同時各跑一次 <code>pg_dump</code>。密碼從環境變數讀，不存進資料庫。</span></div></li>
+      <li><div><b>寫檔並記帳</b><span>存成「資料庫名_日期_時間.dump」，紀錄從 running 改成 completed，填上大小和耗時。單次最長等 5 分鐘。</span></div></li>
+      <li><div><b>失敗也留下證據</b><span>dump 失敗就把 pg_dump 的錯誤訊息寫進紀錄、標成 failed，不影響其他資料庫。</span></div></li>
+      <li><div><b>清掉過期的備份</b><span>再呼叫 <code>POST /api/cleanup</code>，照保留份數和天數刪檔，回報刪了幾份。</span></div></li>
+      <li><div><b>隔天早上看一眼</b><span><code>GET /api/health</code> 不用登入，直接告訴你各資料庫連得上沒、Redis 狀態、最後一次備份的時間和結果。</span></div></li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="code-h">
+    <div class="sec-head">
+      <h2 id="code-h">裝起來只要這幾步</h2>
+      <p>Node.js 加上主機上已經有的 PostgreSQL 命令列工具就夠了。</p>
+    </div>
+    <div class="code-wrap">
+<pre><code><span class="c"># 1. 安裝並啟動（預設 port 4023）</span>
+npm install
+npm start
+
+<span class="c"># 2. .env 需要的變數（值自己填）</span>
+<span class="c">#   SELFBASE_TOKEN   API 的 Bearer token</span>
+<span class="c">#   PG_BIN_PATH      pg_dump / psql 所在資料夾</span>
+<span class="c">#   PG_PASSWORD      或 PG_PASSWORD_&lt;ID&gt; 分庫設定</span>
+
+<span class="c"># 3. 登記要備份的資料庫</span>
+curl -X POST $SELFBASE/api/databases \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"id":"<span class="s">shop</span>","db_name":"<span class="s">shop</span>"}'
+
+<span class="c"># 4. 交給排程器，例如每天 03:00</span>
+0 3 * * * curl -X POST $SELFBASE/api/backup/all \
+  -H "Authorization: Bearer $TOKEN"</code></pre>
+      <div class="code-side">
+        <p>登記時沒填的欄位用預設值：主機 <code>localhost</code>、port <code>5432</code>、使用者 <code>postgres</code>。刪除是停用，不會刪掉已有的備份紀錄，同一個 id 再登記一次就恢復。</p>
+        <p>每個資料庫可以有自己的密碼：id 是 <code>shop</code> 就讀 <code>PG_PASSWORD_SHOP</code>，沒有才用共用的 <code>PG_PASSWORD</code>。</p>
+        <p>第 4 步的 cron 只是例子，任何能定時發 HTTP 請求的工具都行。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="who-h">
+    <div class="sec-head"><h2 id="who-h">它碰哪些東西</h2></div>
+    <div class="who">
+      <div>
+        <h3>呼叫的工具與服務</h3>
+        <div class="chips">
+          <span class="chip">pg_dump<small>備份</small></span>
+          <span class="chip">pg_restore<small>還原 .dump</small></span>
+          <span class="chip">psql<small>還原 .sql · 查統計</small></span>
+          <span class="chip">Redis<small>本機 6379</small></span>
+          <span class="chip">Memurai<small>Windows 服務</small></span>
+          <span class="chip">SQLite<small>備份帳本</small></span>
+        </div>
+        <p style="margin-top:14px;font-size:14px;color:var(--ink-2)">目前寫給 Windows 主機：預設的 PostgreSQL 路徑是 Windows 版 16，Redis 啟動用 Windows 服務。換到 Linux 要改 <code class="inline-code">PG_BIN_PATH</code>。</p>
+      </div>
+      <div>
+        <h3>可調整的設定（PUT /api/settings）</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>設定</th><th>預設與用途</th></tr></thead>
+            <tbody>
+              <tr><td>retention_count</td><td>10，每個資料庫保留的備份份數</td></tr>
+              <tr><td>retention_days</td><td>30，超過幾天的備份會被清掉</td></tr>
+              <tr><td>backup_format</td><td>custom（.dump，可用 pg_restore）；其他值輸出純 .sql</td></tr>
+              <tr><td>pg_bin_path</td><td>PostgreSQL 命令列工具的資料夾</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>SelfBase · Node.js 原生 http + better-sqlite3，零框架</span>
+    <span>更新於 2026-11-07</span>
+  </footer>
+</div>
+</body>
+</html>

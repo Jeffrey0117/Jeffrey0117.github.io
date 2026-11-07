@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jeffrey 的專案</title>
+<meta name="description" content="一個人從零打造的自架生態系：語音輸入、金流、雲端硬碟、資料庫，每個專案一頁介紹。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+.home-hero { padding-block: 56px 48px; max-width: 44em; }
+.home-hero h1 { font-size: clamp(34px, 5.4vw, 52px); font-weight: 900; line-height: 1.15; letter-spacing: -0.02em; }
+.home-hero .lede { margin-top: 20px; font-size: 18px; color: var(--ink-2); }
+.group-title { font-size: 14px; font-weight: 700; letter-spacing: .08em; color: var(--ink-3); margin-bottom: 16px; }
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.card {
+  display: flex; flex-direction: column; gap: 8px; padding: 22px 22px 20px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  color: var(--ink); text-decoration: none; transition: border-color .15s, transform .15s;
+}
+.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.card .name { font-family: var(--font-mono); font-weight: 600; font-size: 17px; }
+.card .what { font-size: 15px; color: var(--ink-2); flex: 1; }
+.card .kind { font-family: var(--font-mono); font-size: 12px; color: var(--accent); }
+.more { margin-top: 18px; font-size: 14px; color: var(--ink-3); }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } .card:hover { transform: none; } }
+@media (max-width: 820px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .cards { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topbar" aria-label="網站">
+    <span style="font-weight:700">Jeffrey Yellowman</span>
+    <div class="links"><a href="https://github.com/Jeffrey0117">GitHub</a></div>
+  </nav>
+
+  <header class="home-hero">
+    <div class="eyebrow">一個人的自架生態系</div>
+    <h1>自己會用的東西，<br>就自己做出來。</h1>
+    <p class="lede">語音輸入、金流、雲端硬碟、資料庫和部署平台，全部自己寫、自己架、每天自己用。這裡每個專案都有一頁，講清楚它解決什麼問題、怎麼運作。</p>
+  </header>
+
+  <section aria-labelledby="g1">
+    <h2 class="group-title" id="g1">給所有人用</h2>
+    <div class="cards">
+      <a class="card" href="https://jeffrey0117.github.io/SpeakSlow/">
+        <span class="kind">桌面 App · 開源</span>
+        <span class="name">SpeakSlow 聲聲慢</span>
+        <span class="what">專為中文打造的本地語音輸入。講完直接貼到游標處，不上雲。</span>
+      </a>
+      <a class="card" href="pokkit/">
+        <span class="kind">自架服務 · 開源</span>
+        <span class="name">Pokkit</span>
+        <span class="what">自己的雲端硬碟。大檔分享、密碼與到期時間、在家高速上傳。</span>
+      </a>
+    </div>
+  </section>
+
+  <section aria-labelledby="g2">
+    <h2 class="group-title" id="g2">金流</h2>
+    <div class="cards">
+      <a class="card" href="paygate/">
+        <span class="kind">後端服務</span>
+        <span class="name">PayGate</span>
+        <span class="what">所有產品共用的收銀台。結帳、續訂、到期降級、通知產品。</span>
+      </a>
+      <a class="card" href="newebpay-kit/">
+        <span class="kind">npm 套件 · 開源</span>
+        <span class="name">newebpay-kit</span>
+        <span class="what">藍新金流零依賴 Node SDK，含信用卡定期定額。</span>
+      </a>
+    </div>
+  </section>
+
+  <section aria-labelledby="g3">
+    <h2 class="group-title" id="g3">資料與基礎設施</h2>
+    <div class="cards">
+      <a class="card" href="selfize/">
+        <span class="kind">自架服務 · 開源</span>
+        <span class="name">Selfize</span>
+        <span class="what">自架的 SQLite REST API，動態建表，像 PocketBase 但用 Node.js。</span>
+      </a>
+      <a class="card" href="selfbase/">
+        <span class="kind">自架服務 · 開源</span>
+        <span class="name">SelfBase</span>
+        <span class="what">PostgreSQL 一鍵備份、還原、清舊檔，加上 Redis 健康檢查。</span>
+      </a>
+    </div>
+    <p class="more">更多專案陸續補上。完整清單在 <a href="https://github.com/Jeffrey0117">GitHub</a>。</p>
+  </section>
+
+  <footer>
+    <span>Jeffrey Yellowman</span>
+    <span>更新於 2026-11-07</span>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>newebpay-kit</title>
+<meta name="description" content="藍新金流 NewebPay 零依賴 Node SDK：MPG 幕前支付、信用卡定期定額委託（建立、暫停、終止、改金額、查詢），以及 notify 解密驗章。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+/* Hero object: a recurring-billing mandate form (委託書) with its lifecycle stamped on. */
+.mandate {
+  width: 100%; max-width: 360px; background: var(--object); color: var(--object-ink);
+  font-family: var(--font-mono); font-size: 13px; line-height: 1.7;
+  padding: 22px 22px 20px; position: relative; border-radius: 4px;
+  border: 1px solid rgba(38, 48, 44, .14);
+  box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 18px 40px -18px rgba(20, 40, 30, .35);
+  transform: rotate(1deg);
+}
+.mandate .head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.mandate .title { font-family: var(--font-body); font-weight: 900; font-size: 18px; letter-spacing: .18em; }
+.mandate .code { font-size: 11px; opacity: .6; }
+.mandate .sub { font-size: 11px; opacity: .6; margin-top: 2px; }
+.mandate hr { border: 0; border-top: 1px solid rgba(38, 48, 44, .25); margin: 12px 0; }
+.mandate .row { display: flex; justify-content: space-between; gap: 12px; }
+.mandate .row span:first-child { opacity: .6; flex: none; }
+.mandate .row span:last-child { text-align: right; min-width: 0; overflow-wrap: anywhere; }
+.mandate .amt span:last-child { color: #a8520c; font-weight: 600; font-size: 16px; }
+.mandate .life-h { font-size: 11px; opacity: .6; letter-spacing: .12em; margin-bottom: 6px; }
+.mandate .life { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.mandate .life li { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 8px; align-items: baseline; }
+.mandate .life b { font-weight: 600; font-size: 12px; text-align: center; border: 1.5px solid currentColor; border-radius: 3px; padding: 0 4px; }
+.mandate .life .ok b { color: #0f7a5c; }
+.mandate .life .pause b { color: #8a6d1a; }
+.mandate .life .end b { color: #a8520c; }
+.mandate .life span { font-size: 12px; overflow-wrap: anywhere; }
+.mandate .stamp {
+  position: absolute; right: 14px; bottom: 62px; transform: rotate(-14deg);
+  font-family: var(--font-body); font-weight: 900; font-size: 13px; letter-spacing: .14em;
+  color: #0f7a5c; border: 2px solid #0f7a5c; border-radius: 6px; padding: 2px 8px; opacity: .78;
+}
+.mandate .foot { margin-top: 12px; font-size: 11px; opacity: .6; }
+@media (prefers-reduced-motion: no-preference) {
+  .mandate { animation: slide .8s cubic-bezier(.2,.7,.25,1) both; }
+  .mandate .stamp { animation: stamp .45s .7s cubic-bezier(.3,1.6,.5,1) both; }
+  @keyframes slide { from { transform: rotate(1deg) translateY(14px); opacity: 0; } to { transform: rotate(1deg); opacity: 1; } }
+  @keyframes stamp { from { transform: rotate(-14deg) scale(1.6); opacity: 0; } to { transform: rotate(-14deg) scale(1); opacity: .78; } }
+}
+@media (max-width: 380px) {
+  .mandate { padding: 18px 16px; }
+  .mandate .life li { grid-template-columns: 66px minmax(0, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topbar" aria-label="網站">
+    <a href="../">← Jeffrey 的專案</a>
+    <div class="links">
+      <a href="https://www.npmjs.com/package/newebpay-kit">npm</a>
+      <a href="https://github.com/Jeffrey0117/newebpay-kit">GitHub</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <div class="eyebrow">藍新金流 NODE SDK</div>
+      <h1>串藍新，<br>不用自己寫加解密。</h1>
+      <p class="lede">在台灣用 Node 接藍新，最花時間的不是商業邏輯，而是 AES 加密、SHA256 驗章、PHP 格式的 query string，還有手冊沒講清楚的 padding。newebpay-kit 把這些包成幾個函式：單次付款、每月定期定額、解開藍新的通知，都只要一行。</p>
+      <div class="facts" aria-label="套件數字">
+        <div class="fact"><b>13</b><span>個 API 函式</span></div>
+        <div class="fact"><b>0</b><span>個相依套件</span></div>
+        <div class="fact"><b>12</b><span>個測試</span></div>
+      </div>
+      <p class="asof">數字截至 2026-11-07</p>
+      <div class="cta">
+        <a class="btn primary" href="https://www.npmjs.com/package/newebpay-kit">npm i newebpay-kit</a>
+        <a class="btn ghost" href="https://github.com/Jeffrey0117/newebpay-kit">看原始碼</a>
+      </div>
+    </div>
+    <div class="object-col">
+      <div class="mandate" role="img" aria-label="範例定期定額委託書：每月 5 號扣 299 元，從建立到暫停、恢復、終止，每個狀態對應一個函式">
+        <div class="head">
+          <span class="title">委託書</span>
+          <span class="code">NPA-B05</span>
+        </div>
+        <div class="sub">信用卡定期定額 · 範例</div>
+        <hr>
+        <div class="row"><span>MerOrderNo</span><span>sub_1024_…</span></div>
+        <div class="row"><span>ProdDesc</span><span>Pro 月費</span></div>
+        <div class="row"><span>PeriodType</span><span>M · 每月</span></div>
+        <div class="row"><span>PeriodPoint</span><span>05 號扣款</span></div>
+        <div class="row"><span>PeriodTimes</span><span>99 期</span></div>
+        <div class="row amt"><span>PeriodAmt</span><span>NT$299</span></div>
+        <hr>
+        <div class="life-h">委託狀態</div>
+        <ol class="life">
+          <li class="ok"><b>建立</b><span>period()</span></li>
+          <li class="ok"><b>每期扣款</b><span>parsePeriodNotify()</span></li>
+          <li class="pause"><b>suspend</b><span>alterPeriodStatus()</span></li>
+          <li class="ok"><b>restart</b><span>alterPeriodStatus()</span></li>
+          <li class="end"><b>terminate</b><span>不可逆</span></li>
+        </ol>
+        <span class="stamp" aria-hidden="true">首期已授權</span>
+        <div class="foot">改金額 alterPeriodAmt() · 對帳 queryPeriod()</div>
+      </div>
+      <p class="object-note">示意委託書：一張訂閱從建立到終止，每一步對應一個函式</p>
+    </div>
+  </header>
+
+  <section aria-labelledby="caps-h">
+    <div class="sec-head">
+      <h2 id="caps-h">它幫你做掉的事</h2>
+      <p>這些都是串藍新時一定要寫、而且寫錯了不會有明確錯誤訊息的部分。</p>
+    </div>
+    <div class="caps">
+      <div class="cap"><h3>產生付款表單</h3><p>給訂單編號、金額、品名和 email，回傳表單網址與加密好的欄位，前端整包送出就到藍新付款頁。</p><span class="tag">mpg()</span></div>
+      <div class="cap"><h3>建立每月訂閱</h3><p>消費者在藍新頁輸入一次卡號，之後藍新依週期自動扣款。預設建立當下就授權首期。</p><span class="tag">period()</span></div>
+      <div class="cap"><h3>管理委託</h3><p>暫停、恢復、終止、改金額或週期、查詢委託單，都是伺服器對伺服器直接送出，回應自動解密。</p><span class="tag">postForm()</span></div>
+      <div class="cap"><h3>先驗章再解密</h3><p>付款通知的 TradeSha 對不上就直接丟錯，不會把偽造的通知當成付款成功。</p><span class="tag">parseMpgNotify()</span></div>
+      <div class="cap"><h3>處理藍新的 padding</h3><p>藍新的 AES 用 32 bytes 當單位補齊，不是標準 PKCS7 的 16。照標準寫，一部分真實通知會被拒收。</p><span class="tag">pad 1~32</span></div>
+      <div class="cap"><h3>對齊官方手冊</h3><p>加密輸出和 TradeSha 用藍新手冊的範例逐字比對；query string 照 PHP 的格式，空格編成 +。</p><span class="tag">known-answer</span></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="flow-h">
+    <div class="sec-head">
+      <h2 id="flow-h">一張訂閱怎麼走</h2>
+      <p>以每月 299 元的方案為例，從使用者按下訂閱，到某天他退訂。</p>
+    </div>
+    <ol class="flow">
+      <li><div><b>後端產生委託表單</b><span><code>period()</code> 把訂單、金額、週期加密成 <code>PostData_</code>，回傳表單網址和欄位。這一步不碰網路。</span></div></li>
+      <li><div><b>使用者在藍新輸入卡號</b><span>前端把表單送出，卡號只經過藍新，你的伺服器碰不到。</span></div></li>
+      <li><div><b>藍新通知建立結果</b><span>藍新打你的 NotifyURL，body 裡的 <code>Period</code> 交給 <code>parsePeriodNotify()</code> 解密，<code>Status</code> 是 SUCCESS 就開通。</span></div></li>
+      <li><div><b>之後每期自動扣款</b><span>扣款排程在藍新那端，每期結果都會再打一次 NotifyURL。通知漏了藍新不會重送，所以要冪等，並用 <code>queryPeriod()</code> 對帳。</span></div></li>
+      <li><div><b>使用者要暫停或改方案</b><span><code>alterPeriodStatus()</code> 送 suspend 或 restart，<code>alterPeriodAmt()</code> 改金額或週期，交給 <code>postForm()</code> 送出。</span></div></li>
+      <li><div><b>使用者退訂</b><span>送 terminate 結束委託。終止之後不能恢復，想保留回來的路就用 suspend。</span></div></li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="code-h">
+    <div class="sec-head">
+      <h2 id="code-h">接通知只要這幾行</h2>
+      <p>金鑰放環境變數，驗章、解密、去 padding 都在套件裡。</p>
+    </div>
+    <div class="code-wrap">
+<pre><code>const { createNewebpay } = require(<span class="s">'newebpay-kit'</span>)
+
+const pay = createNewebpay({
+  merchantID: process.env.NEWEBPAY_MERCHANT_ID,
+  hashKey: process.env.NEWEBPAY_HASH_KEY, <span class="c">// 32 字元</span>
+  hashIV: process.env.NEWEBPAY_HASH_IV,   <span class="c">// 16 字元</span>
+  sandbox: process.env.NEWEBPAY_SANDBOX === <span class="s">'1'</span>,
+})
+
+<span class="c">// 單次付款的 NotifyURL：驗章不過直接 throw</span>
+const result = pay.parseMpgNotify(req.body)
+<span class="c">// { Status: 'SUCCESS', Result: {…} }</span>
+
+<span class="c">// 定期定額每期的 NotifyURL</span>
+const notify = pay.parsePeriodNotify(req.body.Period)
+if (notify.Status === <span class="s">'SUCCESS'</span>) extendMembership()</code></pre>
+      <div class="code-side">
+        <p>建立時會先檢查金鑰長度：<code>hashKey</code> 不是 32 字元、<code>hashIV</code> 不是 16 字元就直接報錯，不會等到第一筆交易才發現。</p>
+        <p>1.0.0 修掉一個實際踩到的問題：舊版解密只接受 1 到 16 的 padding，但藍新官方以 32 bytes 為單位補齊，真實通知的 pad 值可能到 32，於是合法通知被整批拒收。現在接受 1 到 32，並逐個 byte 檢查，金鑰錯了仍然會拒收。</p>
+        <p><code>sandbox: true</code> 會改打測試站，要搭配藍新測試平台另開的測試商店金鑰，正式金鑰在測試站一定失敗。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="who-h">
+    <div class="sec-head"><h2 id="who-h">誰在用、有哪些函式</h2></div>
+    <div class="who">
+      <div>
+        <h3>正式環境使用者</h3>
+        <div class="chips">
+          <a class="chip" href="../paygate/">PayGate<small>訂閱收銀台</small></a>
+        </div>
+        <p style="margin-top:14px;color:var(--ink-2);font-size:15px">PayGate 的藍新單筆付款和每月定期定額，底層都是這個套件。</p>
+        <h3 style="margin-top:28px">需求</h3>
+        <div class="chips">
+          <span class="chip">Node 18+<small>內建 fetch</small></span>
+          <span class="chip">node:crypto<small>唯一用到的模組</small></span>
+          <span class="chip">TypeScript<small>附 index.d.ts</small></span>
+        </div>
+      </div>
+      <div>
+        <h3>API 一覽</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>函式</th><th>用途</th></tr></thead>
+            <tbody>
+              <tr><td>mpg()</td><td>單次付款表單（NPA-F01）</td></tr>
+              <tr><td>parseMpgNotify()</td><td>單次付款通知：驗章後解密</td></tr>
+              <tr><td>period()</td><td>建立定期定額委託（NPA-B05）</td></tr>
+              <tr><td>alterPeriodStatus()</td><td>暫停、恢復、終止委託（NPA-B051）</td></tr>
+              <tr><td>alterPeriodAmt()</td><td>改金額、週期、期數（NPA-B052）</td></tr>
+              <tr><td>queryPeriod()</td><td>查詢委託單（NPA-B053）</td></tr>
+              <tr><td>postForm()</td><td>伺服器端送出上面三支，並解密回應</td></tr>
+              <tr><td>parsePeriodNotify()</td><td>解密定期定額通知（建立、每期 NPA-N050）</td></tr>
+              <tr><td>encrypt() 等 5 個</td><td>底層：encrypt、decrypt、tradeSha、checkCode、checkValue</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>newebpay-kit · Node.js 18+，只用 node:crypto，零相依 · MIT</span>
+    <span>更新於 2026-11-07</span>
+  </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PayGate</title>
+<meta name="description" content="所有產品共用一個收銀台：結帳、驗章、記帳、續訂、到期降級，產品只要問一句「這個人付了沒」。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+/* Hero object: a printed receipt. */
+.receipt {
+  width: 100%; max-width: 340px; background: var(--object); color: var(--object-ink);
+  font-family: var(--font-mono); font-size: 13px; line-height: 1.75;
+  padding: 26px 24px 30px; position: relative;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 18px 40px -18px rgba(20, 40, 30, .35);
+  transform: rotate(-1.2deg);
+  -webkit-mask: radial-gradient(circle 6px at 50% 100%, transparent 98%, #000) bottom / 16px 100%,
+                radial-gradient(circle 6px at 50% 0, transparent 98%, #000) top / 16px 100%;
+          mask: radial-gradient(circle 6px at 50% 100%, transparent 98%, #000) bottom / 16px 100%,
+                radial-gradient(circle 6px at 50% 0, transparent 98%, #000) top / 16px 100%;
+}
+.receipt .brand { text-align: center; font-weight: 600; letter-spacing: 0.3em; font-size: 14px; }
+.receipt .sub { text-align: center; font-size: 11px; opacity: .65; }
+.receipt hr { border: 0; border-top: 1.5px dashed rgba(38, 48, 44, .35); margin: 12px 0; }
+.receipt .row { display: flex; justify-content: space-between; gap: 12px; }
+.receipt .row span:first-child { opacity: .6; flex: none; }
+.receipt .row span:last-child { text-align: right; min-width: 0; overflow-wrap: anywhere; }
+.receipt .total { font-size: 18px; font-weight: 600; }
+.receipt .total span:last-child { color: #a8520c; }
+.receipt .step { display: flex; gap: 8px; }
+.receipt .step i { font-style: normal; color: #0f7a5c; font-weight: 600; }
+.receipt .thanks { text-align: center; margin-top: 4px; opacity: .65; letter-spacing: .2em; }
+@media (prefers-reduced-motion: no-preference) {
+  .receipt { animation: print .9s cubic-bezier(.2,.7,.25,1) both; }
+  @keyframes print { from { transform: rotate(-1.2deg) translateY(-14px); opacity: 0; } to { transform: rotate(-1.2deg); opacity: 1; } }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topbar" aria-label="網站">
+    <a href="../">← Jeffrey 的專案</a>
+    <div class="links"><span style="color:var(--ink-3)">原始碼未公開</span></div>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <div class="eyebrow">CLOUDPIPE 生態系的收銀台</div>
+      <h1>所有產品，<br>共用一個收銀台。</h1>
+      <p class="lede">每個產品都自己串金流，就要各寫一次結帳、驗章、記帳、續訂和到期處理。PayGate 把這些集中起來：產品只要問一句「這個人付了沒」，其他的它來管。</p>
+      <div class="facts" aria-label="使用現況">
+        <div class="fact"><b>7</b><span>個產品在用</span></div>
+        <div class="fact"><b>21</b><span>個付費方案</span></div>
+        <div class="fact"><b>2</b><span>家金流</span></div>
+      </div>
+      <p class="asof">數字截至 2026-11-07</p>
+    </div>
+    <div class="object-col">
+      <div class="receipt" role="img" aria-label="範例收據：一筆藍新定期定額訂閱從入帳到通知產品的過程">
+        <div class="brand">PAYGATE</div>
+        <div class="sub">2026-11-06 15:55 · 範例</div>
+        <hr>
+        <div class="row"><span>訂單</span><span>NW8K2Q7M</span></div>
+        <div class="row"><span>產品</span><span>keybox · standard</span></div>
+        <div class="row"><span>金流</span><span>藍新 定期定額 第 1 期</span></div>
+        <hr>
+        <div class="row total"><span>合計</span><span>NT$299</span></div>
+        <hr>
+        <div class="step"><i>✓</i><span>解密驗章通過</span></div>
+        <div class="step"><i>✓</i><span>同一筆不重複入帳</span></div>
+        <div class="step"><i>✓</i><span>訂閱展延到 12/09</span></div>
+        <div class="step"><i>✓</i><span>通知 keybox 開通</span></div>
+        <div class="step"><i>✓</i><span>推播到老闆手機</span></div>
+        <hr>
+        <div class="thanks">謝謝光臨</div>
+      </div>
+      <p class="object-note">示意收據：一筆訂閱從入帳到通知產品的每一步</p>
+    </div>
+  </header>
+
+  <section aria-labelledby="caps-h">
+    <div class="sec-head">
+      <h2 id="caps-h">它幫產品做掉的事</h2>
+      <p>這些原本每個產品都要自己寫一遍，而且最容易出錯的就是這幾塊。</p>
+    </div>
+    <div class="caps">
+      <div class="cap"><h3>開結帳頁</h3><p>產品後端打一個 API，拿到藍新或 PAYUNi 的刷卡網址，把使用者導過去就好。</p><span class="tag">單筆 · 訂閱</span></div>
+      <div class="cap"><h3>每月自動扣款</h3><p>藍新定期定額每期扣款成功，自動入帳並展延訂閱；扣款失敗會標記並通知你。</p><span class="tag">藍新定期定額</span></div>
+      <div class="cap"><h3>回答「付了沒」</h3><p>一個查詢就回答這個人有沒有訂、哪個方案、到哪天、有哪些額度。</p><span class="tag">GET /check</span></div>
+      <div class="cap"><h3>到期自動降級</h3><p>每天凌晨掃一次過期的訂閱，通知對應的產品把使用者降回免費版。</p><span class="tag">每日 04:00</span></div>
+      <div class="cap"><h3>一定通知到產品</h3><p>開通、續訂、到期都會打 webhook 給產品。失敗就重試，最多 6 次，間隔從 30 秒拉長到 12 小時。</p><span class="tag">自動重試</span></div>
+      <div class="cap"><h3>認得是誰的錢</h3><p>訂單編號開頭（KB、LS、PD…）對應到產品。兩個產品剛好同價時，也不會把錢記錯人。</p><span class="tag">前綴配對</span></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="flow-h">
+    <div class="sec-head">
+      <h2 id="flow-h">一筆錢怎麼走</h2>
+      <p>以每月訂閱為例，使用者按下「訂閱」到產品開通，中間發生的事。</p>
+    </div>
+    <ol class="flow">
+      <li><div><b>產品要一張結帳單</b><span>產品後端帶著使用者 email 和方案，向 PayGate 要結帳網址。</span></div></li>
+      <li><div><b>使用者在藍新刷卡</b><span>卡號只經過藍新，PayGate 和產品都碰不到。</span></div></li>
+      <li><div><b>藍新回報結果</b><span>PayGate 收到加密的通知，先驗章、再解密，金鑰不對的一律拒收。</span></div></li>
+      <li><div><b>入帳並展延訂閱</b><span>同一筆交易就算藍新重送也只記一次，訂閱到期日照藍新的下次扣款日往後延。</span></div></li>
+      <li><div><b>通知產品與老闆</b><span>打 webhook 給產品開通功能，同時推播到 Telegram。</span></div></li>
+      <li><div><b>之後每個月自動重來</b><span>藍新每期扣款都會再走一次第 3 到 5 步，沒扣到就不延期，到期自然降級。</span></div></li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="code-h">
+    <div class="sec-head">
+      <h2 id="code-h">產品端只要寫這幾行</h2>
+      <p>不用碰金流金鑰、不用寫解密、不用管續訂。</p>
+    </div>
+    <div class="code-wrap">
+<pre><code><span class="c">// 使用者每次進付費功能前問一次</span>
+const res = await fetch(
+  `${PAYGATE}/api/subscription/check` +
+  `?email=${email}&amp;product=<span class="s">pokkit</span>`
+)
+const sub = await res.json()
+
+<span class="c">// { active: true, tier: "pro",</span>
+<span class="c">//   end_date: "2026-12-09T…", quotas: {…} }</span>
+if (!sub.active) return showUpgrade()</code></pre>
+      <div class="code-side">
+        <p>回傳的 <code>active</code> 已經把「過期」和「退費處理中」都算進去，產品不用自己判斷日期。</p>
+        <p><code>quotas</code> 是方案裡定義好的額度，例如容量上限，所以改方案只要改 PayGate 一個地方。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="who-h">
+    <div class="sec-head"><h2 id="who-h">接了誰</h2></div>
+    <div class="who">
+      <div>
+        <h3>正在使用的產品</h3>
+        <div class="chips">
+          <a class="chip" href="../pokkit/">pokkit<small>雲端硬碟</small></a>
+          <span class="chip">keybox<small>資料包</small></span>
+          <span class="chip">lurlhub<small>影音收藏</small></span>
+          <span class="chip">upimg<small>圖床</small></span>
+          <span class="chip">reelscript<small>影片學習</small></span>
+          <span class="chip">takeenglish<small>片語搜尋</small></span>
+          <span class="chip">pipee<small>網站託管</small></span>
+        </div>
+      </div>
+      <div>
+        <h3>支援的金流</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>金流</th><th>用途</th></tr></thead>
+            <tbody>
+              <tr><td>藍新 NewebPay</td><td>單筆付款、每月定期定額（2026 年 10 月起），底層用 <a href="../newebpay-kit/">newebpay-kit</a></td></tr>
+              <tr><td>統一 PAYUNi</td><td>單筆付款，用訂單前綴辨識產品</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>PayGate · Node.js 原生 http + SQLite，零框架</span>
+    <span>更新於 2026-11-07</span>
+  </footer>
+</div>
+</body>
+</html>

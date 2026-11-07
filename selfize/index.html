@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Selfize</title>
+<meta name="description" content="用一個 JSON 定義資料表，馬上就有整組 REST API。自架、資料全在一個 SQLite 檔，像 PocketBase，但是 Node.js。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+/* Hero object: a library-style index card holding one real request and its response. */
+.apicard {
+  width: 100%; max-width: 360px; background: var(--object); color: var(--object-ink);
+  font-family: var(--font-mono); font-size: 12.5px; line-height: 1.7;
+  border-radius: 6px; position: relative; padding: 0 0 22px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 18px 40px -18px rgba(20, 40, 30, .35);
+  transform: rotate(1deg);
+  background-image: repeating-linear-gradient(to bottom, transparent 0 20.5px, rgba(38, 48, 44, .08) 20.5px 21.5px);
+  background-position: 0 58px;
+}
+.apicard .head {
+  display: flex; align-items: center; gap: 10px; padding: 14px 20px 12px;
+  border-bottom: 2px solid rgba(168, 82, 12, .45); background: var(--object); border-radius: 6px 6px 0 0;
+}
+.apicard .hole { flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--paper); box-shadow: inset 0 1px 2px rgba(0,0,0,.25); }
+.apicard .method { font-weight: 600; color: #0f7a5c; letter-spacing: .04em; }
+.apicard .path { min-width: 0; overflow-wrap: anywhere; }
+.apicard .label { padding: 10px 20px 0; font-size: 10.5px; letter-spacing: .2em; color: rgba(38, 48, 44, .55); }
+.apicard pre {
+  margin: 0; padding: 2px 20px 0; background: none; border: 0; border-radius: 0;
+  font-size: 12.5px; line-height: 1.7; color: inherit; overflow: visible;
+  white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.apicard .k { color: #6b4a1e; }
+.apicard .v { color: #0f7a5c; }
+.apicard .auto { background: rgba(15, 122, 92, .12); border-radius: 3px; padding: 0 2px; }
+.apicard .cut { border: 0; border-top: 1.5px dashed rgba(38, 48, 44, .35); margin: 14px 20px 0; }
+.apicard .stamp {
+  display: inline-block; float: right; margin-top: -4px; letter-spacing: .12em;
+  font-weight: 600; font-size: 13px; letter-spacing: .12em; color: #a8520c;
+  border: 2px solid #a8520c; border-radius: 4px; padding: 2px 8px; transform: rotate(-9deg);
+  background: rgba(255, 254, 250, .7);
+}
+.apicard .legend { padding: 12px 20px 0; font-size: 11px; opacity: .65; font-family: var(--font-body); }
+.apicard .legend span { background: rgba(15, 122, 92, .12); border-radius: 3px; padding: 0 4px; font-family: var(--font-mono); }
+@media (prefers-reduced-motion: no-preference) {
+  .apicard { animation: slidein .8s cubic-bezier(.2,.7,.25,1) both; }
+  .apicard .stamp { animation: stamp .35s cubic-bezier(.3,1.6,.5,1) .75s both; }
+  @keyframes slidein { from { transform: rotate(1deg) translateY(14px); opacity: 0; } to { transform: rotate(1deg); opacity: 1; } }
+  @keyframes stamp { from { transform: rotate(-9deg) scale(1.8); opacity: 0; } to { transform: rotate(-9deg) scale(1); opacity: 1; } }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topbar" aria-label="網站">
+    <a href="../">← Jeffrey 的專案</a>
+    <div class="links"><a href="https://github.com/Jeffrey0117/Selfize">GitHub 原始碼</a></div>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <div class="eyebrow">自架的 SQLite 後端 · 像 PocketBase，但是 Node.js</div>
+      <h1>寫一個 JSON，<br>就有一整組 API。</h1>
+      <p class="lede">做小產品時，後端常常只是要存幾張表、讓前端讀寫。Selfize 讓你用一段 JSON 定義資料表，馬上就有新增、查詢、修改、刪除的 REST API。不用寫 migration，不用 ORM，資料全部在一個 SQLite 檔裡。</p>
+      <div class="facts" aria-label="專案規模">
+        <div class="fact"><b>11</b><span>個 API 端點</span></div>
+        <div class="fact"><b>2</b><span>個套件依賴</span></div>
+        <div class="fact"><b>741</b><span>行後端程式碼</span></div>
+      </div>
+      <p class="asof">數字截至 2026-11-07</p>
+    </div>
+    <div class="object-col">
+      <div class="apicard" role="img" aria-label="範例卡片：對 books 這個 collection 新增一筆紀錄，伺服器回傳 201 並自動補上 id、created_at、updated_at">
+        <div class="head"><span class="hole"></span><span class="method">POST</span><span class="path">/api/collections/books/records</span></div>
+        <div class="label">送出</div>
+<pre>{ <span class="k">"title"</span>: <span class="v">"Clean Code"</span>,
+  <span class="k">"author"</span>: <span class="v">"Robert C. Martin"</span>,
+  <span class="k">"tags"</span>: [<span class="v">"programming"</span>] }</pre>
+        <hr class="cut">
+        <div class="label">收到 <span class="stamp">201 CREATED</span></div>
+<pre>{ <span class="auto"><span class="k">"id"</span>: <span class="v">"550e8400-e29b-…"</span></span>,
+  <span class="k">"title"</span>: <span class="v">"Clean Code"</span>,
+  <span class="k">"author"</span>: <span class="v">"Robert C. Martin"</span>,
+  <span class="k">"tags"</span>: [<span class="v">"programming"</span>],
+  <span class="auto"><span class="k">"created_at"</span>: <span class="v">"2026-11-07 08:12:40"</span></span>,
+  <span class="auto"><span class="k">"updated_at"</span>: <span class="v">"2026-11-07 08:12:40"</span></span> }</pre>
+        <p class="legend"><span>底色</span> 是伺服器自動補上的欄位</p>
+      </div>
+      <p class="object-note">示意：對 books 新增一筆，回來的就是存進去的樣子</p>
+    </div>
+  </header>
+
+  <section aria-labelledby="caps-h">
+    <div class="sec-head">
+      <h2 id="caps-h">它做什麼</h2>
+      <p>一般要自己寫一個後端才有的東西，這裡用設定就拿到。</p>
+    </div>
+    <div class="caps">
+      <div class="cap"><h3>執行中開新資料表</h3><p>打一個 API 帶上名稱和欄位，Selfize 就在 SQLite 裡建一張真的資料表。不用重啟、不用寫 migration。</p><span class="tag">POST /api/collections</span></div>
+      <div class="cap"><h3>每張表自動有 CRUD</h3><p>列表、單筆、新增、修改、刪除五個端點自動就有。每筆紀錄自動帶 UUID 和建立、更新時間。</p><span class="tag">/records</span></div>
+      <div class="cap"><h3>用網址查詢</h3><p>篩選有 7 種運算（等於、大於、LIKE 等），可以多欄位排序、分頁、只挑幾個欄位回傳。一頁最多 500 筆。</p><span class="tag">?price=gt.100</span></div>
+      <div class="cap"><h3>關聯一次帶回來</h3><p>欄位標上 <code>ref</code> 指向另一張表，查詢時加 <code>expand</code>，對方那筆就直接附在結果裡，不用再打第二次。</p><span class="tag">?expand=owner_id</span></div>
+      <div class="cap"><h3>讀寫各自設權限</h3><p>每張表的讀、新增、修改、刪除，各自設成公開、只限管理者，或只限登入的使用者。</p><span class="tag">public · admin · user</span></div>
+      <div class="cap"><h3>每個人只碰得到自己的</h3><p>設成 <code>user</code> 的表，伺服器會在每筆資料蓋上擁有者，查詢時強制過濾。別人的紀錄一律回 404，前端想偷看也看不到。</p><span class="tag">_owner</span></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="flow-h">
+    <div class="sec-head">
+      <h2 id="flow-h">從空資料庫到前端能用</h2>
+      <p>中間沒有一行後端程式碼要你寫。</p>
+    </div>
+    <ol class="flow">
+      <li><div><b>啟動伺服器</b><span>第一次跑會自己建出 <code>data/selfize.db</code>，開好 WAL 模式，和一張記錄所有 collection 定義的表。</span></div></li>
+      <li><div><b>定義一個 collection</b><span>送出名稱、欄位和權限。名稱只能小寫英數加底線、不能用底線開頭；有用到 <code>user</code> 權限卻沒宣告 <code>_owner</code> 欄位，會自動幫你補上。</span></div></li>
+      <li><div><b>Selfize 建表</b><span>每個欄位依型別對應到 SQLite 欄位，再加上 <code>id</code>、<code>created_at</code>、<code>updated_at</code>。</span></div></li>
+      <li><div><b>前端直接讀寫</b><span>每個請求進來先看這張表的權限：公開就放行，管理者要帶 token，<code>user</code> 要帶 LetMeUse 登入 token（ES256 簽章，伺服器用公開金鑰驗）。</span></div></li>
+      <li><div><b>要加欄位就 PATCH</b><span>新欄位會用 <code>ALTER TABLE</code> 加上去，舊資料不動。只能加，不會幫你刪欄位或改名。</span></div></li>
+      <li><div><b>備份就是複製一個檔</b><span>所有 collection 和資料都在同一個 SQLite 檔裡，複製它就備份完了。</span></div></li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="code-h">
+    <div class="sec-head">
+      <h2 id="code-h">怎麼開始</h2>
+      <p>四行指令跑起來，再用一個 curl 開第一張表。</p>
+    </div>
+    <div class="code-wrap">
+<pre><code>git clone https://github.com/Jeffrey0117/Selfize.git
+cd Selfize
+npm install
+SELFIZE_TOKEN=<span class="s">換成你自己的長字串</span> npm start
+
+<span class="c"># 開一張 books 表：任何人可讀，只有管理者能改</span>
+curl -X POST localhost:4021/api/collections \
+  -H "Authorization: Bearer $SELFIZE_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{"name":"<span class="s">books</span>",
+       "schema":[{"name":"title","type":"text","required":true},
+                 {"name":"price","type":"number"},
+                 {"name":"tags","type":"json"}],
+       "rules":{"create":"admin","update":"admin","delete":"admin"}}'
+
+<span class="c"># 查詢：價格大於 100、新的在前、只要書名</span>
+curl "localhost:4021/api/collections/books/records?price=gt.100&amp;sort=-created_at&amp;select=title"
+
+<span class="c"># { "items": [ { "id": "…", "title": "…" } ],</span>
+<span class="c">#   "total": 1, "limit": 100, "offset": 0 }</span></code></pre>
+      <div class="code-side">
+        <p>沒設 <code>SELFIZE_TOKEN</code> 會用程式裡的預設開發用 token，<b>放上網路前一定要換掉</b>。</p>
+        <p><code>rules</code> 沒寫的動作預設是 <code>public</code>，所以上面的例子讀取不用帶 token。</p>
+        <p>用瀏覽器打開伺服器根目錄就是管理後台：輸入 token 後可以建表、刪表，用表格瀏覽、新增、編輯紀錄。</p>
+        <p>開發時用 <code>npm run dev</code>，改了程式會自動重啟。其他設定只有 <code>PORT</code>、<code>CORS_ORIGIN</code>，和 <code>user</code> 權限要用的 LetMeUse 來源與允許的 app 白名單。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="who-h">
+    <div class="sec-head"><h2 id="who-h">誰在用、能存什麼</h2></div>
+    <div class="who">
+      <div>
+        <h3>用它當後端的產品</h3>
+        <div class="chips">
+          <span class="chip">HappyBook<small>借書社群</small></span>
+        </div>
+      </div>
+      <div>
+        <h3>欄位型別</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>型別</th><th>怎麼存</th></tr></thead>
+            <tbody>
+              <tr><td>text</td><td>文字，沒指定型別時的預設</td></tr>
+              <tr><td>number / integer</td><td>小數 / 整數</td></tr>
+              <tr><td>boolean</td><td>存成 0 和 1，讀出來是 true / false</td></tr>
+              <tr><td>json</td><td>陣列、物件直接丟進去，讀出來自動還原</td></tr>
+              <tr><td>date</td><td>ISO 8601 字串</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Selfize · Node.js 原生 http + better-sqlite3，兩個依賴</span>
+    <span>更新於 2026-11-07</span>
+  </footer>
+</div>
+</body>
+</html>

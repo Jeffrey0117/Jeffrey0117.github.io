@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pokkit</title>
+<meta name="description" content="放在自己硬碟上的雲端硬碟：上傳照片影片，拿一條分享連結，可以加密碼、設到期；大檔分塊傳，在家走區網直傳。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+/* Hero object: a share-link ticket for one uploaded file. */
+.ticket {
+  width: 100%; max-width: 340px; background: var(--object); color: var(--object-ink);
+  font-family: var(--font-mono); font-size: 13px; line-height: 1.75;
+  border-radius: 10px; position: relative; overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 18px 40px -18px rgba(20, 40, 30, .35);
+  transform: rotate(1.2deg);
+}
+.ticket .top { padding: 20px 22px 16px; }
+.ticket .kind { font-size: 11px; letter-spacing: .25em; opacity: .6; }
+.ticket .name { font-family: var(--font-body); font-size: 19px; font-weight: 900; margin-top: 4px; overflow-wrap: anywhere; }
+.ticket .meta { font-size: 12px; opacity: .65; }
+.ticket .chunks { display: grid; grid-template-columns: repeat(20, minmax(0, 1fr)); gap: 2px; margin-top: 14px; }
+.ticket .chunks i { display: block; height: 10px; border-radius: 2px; background: #0f7a5c; }
+.ticket .chunk-note { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; opacity: .65; margin-top: 6px; }
+.ticket .tear {
+  height: 0; border-top: 1.5px dashed rgba(38, 48, 44, .35); margin: 0 14px; position: relative;
+}
+.ticket .tear::before, .ticket .tear::after {
+  content: ""; position: absolute; top: -9px; width: 18px; height: 18px; border-radius: 50%; background: var(--paper);
+}
+.ticket .tear::before { left: -24px; }
+.ticket .tear::after { right: -24px; }
+.ticket .bottom { padding: 14px 22px 20px; }
+.ticket .row { display: flex; justify-content: space-between; gap: 12px; }
+.ticket .row span:first-child { opacity: .6; flex: none; }
+.ticket .row span:last-child { text-align: right; min-width: 0; overflow-wrap: anywhere; }
+.ticket .lock { color: #a8520c; font-weight: 600; }
+.ticket .link {
+  margin-top: 12px; padding: 8px 10px; border: 1.5px solid rgba(38, 48, 44, .25); border-radius: 6px;
+  font-size: 12.5px; overflow-wrap: anywhere; display: flex; justify-content: space-between; gap: 10px; align-items: center;
+}
+.ticket .link b { color: #0f7a5c; font-weight: 600; }
+.ticket .link small { flex: none; font-size: 11px; opacity: .6; }
+@media (prefers-reduced-motion: no-preference) {
+  .ticket { animation: drop .9s cubic-bezier(.2,.7,.25,1) both; }
+  .ticket .chunks i { animation: fill .35s ease-out both; animation-delay: calc(var(--i) * 45ms + .5s); }
+  @keyframes drop { from { transform: rotate(1.2deg) translateY(-14px); opacity: 0; } to { transform: rotate(1.2deg); opacity: 1; } }
+  @keyframes fill { from { opacity: .15; } to { opacity: 1; } }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topbar" aria-label="網站">
+    <a href="../">← Jeffrey 的專案</a>
+    <div class="links"><a href="https://github.com/Jeffrey0117/Pokkit">GitHub</a></div>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <div class="eyebrow">放在自己硬碟上的雲端</div>
+      <h1>你的檔案，<br>放在信得過的地方。</h1>
+      <p class="lede">照片、影片、文件丟上去，拿到一條分享連結。要給誰看就傳給誰，可以加密碼、設幾天後失效。幾百 MB 的影片也傳得上去，在家還能走區網直傳，不用繞外面一圈。</p>
+      <div class="facts" aria-label="方案與限制">
+        <div class="fact"><b>2 GB</b><span>免費容量</span></div>
+        <div class="fact"><b>100 GB</b><span>Pro 容量</span></div>
+        <div class="fact"><b>16 MB</b><span>大檔每塊大小</span></div>
+      </div>
+      <p class="asof">數字截至 2026-11-07</p>
+    </div>
+    <div class="object-col">
+      <div class="ticket" role="img" aria-label="範例分享票：一支 312 MB 的影片分 20 塊上傳完成，有密碼，7 天後過期，附一條分享連結">
+        <div class="top">
+          <div class="kind">POKKIT · 分享</div>
+          <div class="name">畢業旅行-剪輯版.mp4</div>
+          <div class="meta">video/mp4 · 312 MB · 範例</div>
+          <div class="chunks" aria-hidden="true">
+            <i style="--i:0"></i><i style="--i:1"></i><i style="--i:2"></i><i style="--i:3"></i><i style="--i:4"></i>
+            <i style="--i:5"></i><i style="--i:6"></i><i style="--i:7"></i><i style="--i:8"></i><i style="--i:9"></i>
+            <i style="--i:10"></i><i style="--i:11"></i><i style="--i:12"></i><i style="--i:13"></i><i style="--i:14"></i>
+            <i style="--i:15"></i><i style="--i:16"></i><i style="--i:17"></i><i style="--i:18"></i><i style="--i:19"></i>
+          </div>
+          <div class="chunk-note"><span>20 / 20 塊 · 每塊 16 MB</span><span>✓ 已入庫</span></div>
+        </div>
+        <div class="tear"></div>
+        <div class="bottom">
+          <div class="row"><span>密碼</span><span class="lock">有密碼</span></div>
+          <div class="row"><span>有效期限</span><span>7 天後過期</span></div>
+          <div class="row"><span>過期後</span><span>連結回 410，檔案清掉</span></div>
+          <div class="link"><b>/f/Xq3aZ9bK</b><small>已複製</small></div>
+        </div>
+      </div>
+      <p class="object-note">示意分享票：一支大影片分塊傳完，拿到一條帶密碼、會過期的連結</p>
+    </div>
+  </header>
+
+  <section aria-labelledby="caps-h">
+    <div class="sec-head">
+      <h2 id="caps-h">它能幫你做的事</h2>
+      <p>就是一個雲端硬碟該做的事，只是檔案放在自己的機器上。</p>
+    </div>
+    <div class="caps">
+      <div class="cap"><h3>一條連結就能分享</h3><p>每個檔案上傳完都有自己的分享頁，圖片和影片直接在頁面上預覽，對方不用登入。</p><span class="tag">/f/:id</span></div>
+      <div class="cap"><h3>加密碼、設到期</h3><p>可以選 1 小時、1 天、7 天、30 天或永久。加了密碼的連結要先輸入才看得到，猜密碼每分鐘最多 10 次。</p><span class="tag">1h · 1d · 7d · 30d</span></div>
+      <div class="cap"><h3>大檔案照樣傳</h3><p>超過 64 MB 的檔案自動切成小塊上傳，中途斷線可以從斷掉的那塊接著傳，不用從頭來。</p><span class="tag">分塊續傳</span></div>
+      <div class="cap"><h3>在家走區網直傳</h3><p>在家用同一個 Wi-Fi 時切到區網模式，檔案直接送到家裡的機器。實測 341 MB：繞外網 173 秒，區網 3 秒。</p><span class="tag">LAN 高速模式</span></div>
+      <div class="cap"><h3>照片按月份排好</h3><p>讀照片的拍攝時間排成時間軸，可以建相簿、搜檔名。整本相簿也能開公開連結，隨時收回。</p><span class="tag">/a/:token</span></div>
+      <div class="cap"><h3>刪錯了還救得回來</h3><p>從網頁刪掉的檔案先進垃圾桶，30 天內都能還原，過了才真的清掉。</p><span class="tag">垃圾桶 30 天</span></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="flow-h">
+    <div class="sec-head">
+      <h2 id="flow-h">一支大影片怎麼傳上去</h2>
+      <p>以一支幾百 MB 的手機影片為例，從選檔到拿到連結，中間發生的事。</p>
+    </div>
+    <ol class="flow">
+      <li><div><b>選檔、選期限</b><span>要不要密碼、多久過期，上傳前先選好。密碼只跟著最後一個請求送出，不會存在上傳紀錄裡。</span></div></li>
+      <li><div><b>先問容量夠不夠</b><span>檔案還沒開始傳，伺服器就先比對你的方案剩多少空間。不夠就直接告訴你，不讓你白傳幾百 MB。</span></div></li>
+      <li><div><b>切成 16 MB 一塊</b><span>超過 64 MB 的檔案走分塊上傳，同時送 3 塊。每個請求都很小，過得了代理伺服器 100 MB 的單次上限。</span></div></li>
+      <li><div><b>斷了就接著傳</b><span>某一塊失敗會自動重試 3 次；整個斷線的話，未完成的上傳保留 24 小時，回來可以續傳。</span></div></li>
+      <li><div><b>重組、入庫</b><span>所有塊到齊後在伺服器上組回原檔。照片和影片在背景產縮圖、轉檔，你不用等。</span></div></li>
+      <li><div><b>拿到連結</b><span>回傳 <code>/f/</code> 開頭的分享網址，網頁版會自動複製到剪貼簿。</span></div></li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="code-h">
+    <div class="sec-head">
+      <h2 id="code-h">給開發者：每個專案一把金鑰</h2>
+      <p>自己的其他專案要存圖片、影片，就開一個專案帳號，拿一把 <code class="inline-code">pk_</code> 開頭的金鑰。各專案只看得到自己的檔案。</p>
+    </div>
+    <div class="code-wrap">
+<pre><code>import { createPokkit } from <span class="s">'./pokkit-client.mjs'</span>
+
+const pokkit = createPokkit({
+  baseUrl: <span class="s">'https://your-pokkit.example'</span>,
+  key: process.env.POKKIT_KEY, <span class="c">// pk_…</span>
+})
+
+<span class="c">// 路徑、Buffer、Blob 都可以</span>
+const { id } = await pokkit.upload(<span class="s">'./photo.jpg'</span>)
+pokkit.url(id)   <span class="c">// → …/f/{id} 分享網址</span>
+
+const files = await pokkit.list({ limit: 50 })
+await pokkit.remove(id)</code></pre>
+      <div class="code-side">
+        <p><code>sdk/pokkit-client.mjs</code> 是一個單檔，Node 18 以上直接用，金鑰放在 <code>X-Pokkit-Key</code> 標頭。</p>
+        <p>檔案超過 64 MB 時，<code>upload()</code> 會自動改走 <code>/api/upload/chunked</code> 分塊上傳（需要另外裝 <a href="https://github.com/Jeffrey0117/chunked-upload-kit">chunked-upload-kit</a>）。失敗時錯誤會帶 <code>uploadId</code>，丟回去就能續傳。</p>
+        <p>金鑰在伺服器上只存雜湊值，後台可以隨時換一把新的，舊的立刻失效。</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="who-h">
+    <div class="sec-head"><h2 id="who-h">方案與底層</h2></div>
+    <div class="who">
+      <div>
+        <h3>接了什麼</h3>
+        <div class="chips">
+          <a class="chip" href="../paygate/">PayGate<small>訂閱與扣款</small></a>
+          <span class="chip">LetMeUse<small>登入</small></span>
+          <a class="chip" href="https://github.com/Jeffrey0117/chunked-upload-kit">chunked-upload-kit<small>分塊上傳</small></a>
+          <span class="chip">sharp<small>縮圖</small></span>
+          <span class="chip">ffmpeg<small>影片轉檔</small></span>
+        </div>
+        <p style="margin-top:16px;color:var(--ink-2);font-size:15px">Pro 的訂閱、每月扣款和到期降級都交給 <a href="../paygate/">PayGate</a>，Pokkit 只問一句「這個人有沒有訂」，結果快取 5 分鐘。</p>
+      </div>
+      <div>
+        <h3>三種用法</h3>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>方案</th><th>內容</th></tr></thead>
+            <tbody>
+              <tr><td>訪客快傳</td><td>免登入，單檔最大 64 MB，最長 7 天後自動過期</td></tr>
+              <tr><td>Free</td><td>登入就有，總容量 2 GB</td></tr>
+              <tr><td>Pro</td><td>總容量 100 GB，NT$149／月，經 <a href="../paygate/">PayGate</a> 走藍新每月定期定額，隨時可取消</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Pokkit · Node.js + Fastify + SQLite，sharp 與 ffmpeg 處理照片影片</span>
+    <span>更新於 2026-11-07</span>
+  </footer>
+</div>
+</body>
+</html>
