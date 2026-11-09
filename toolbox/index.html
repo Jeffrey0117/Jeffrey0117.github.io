@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>mytoolbox</title>
+<meta name="description" content="我自己做的 Windows 小工具，一行指令裝到任何一台機器。版本永遠是最新的。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+  /* The command is the product, so it opens the page at full size rather
+     than sitting in a code block halfway down. */
+  .hero { padding-block: 52px 36px; max-width: 46em; }
+  .hero h1 { font-size: clamp(34px, 5.4vw, 52px); font-weight: 900; line-height: 1.15; letter-spacing: -0.02em; }
+  .hero .lede { margin-top: 18px; font-size: 18px; color: var(--ink-2); }
+
+  .command {
+    margin: 30px 0 10px; display: flex; align-items: stretch; gap: 0;
+    border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+    background: var(--code-bg);
+  }
+  .command code {
+    flex: 1; min-width: 0; padding: 16px 18px;
+    font-family: var(--font-mono); font-size: 14.5px; line-height: 1.5;
+    overflow-x: auto; white-space: pre; color: var(--ink);
+  }
+  .command .prompt { color: var(--ink-3); user-select: none; }
+  .command button {
+    flex: none; padding: 0 20px; border: 0; border-left: 1px solid var(--line);
+    background: var(--surface); color: var(--ink); cursor: pointer;
+    font-family: var(--font-body); font-size: 14px; font-weight: 700;
+    transition: background .15s, color .15s;
+  }
+  .command button:hover { background: var(--accent); color: var(--paper); }
+  .command button:focus-visible { outline: 2px solid var(--accent); outline-offset: -4px; }
+  .command button[data-done="1"] { background: var(--accent); color: var(--paper); }
+  .hint { font-size: 13.5px; color: var(--ink-3); }
+  .hint code { font-family: var(--font-mono); font-size: 13px; color: var(--ink-2); }
+
+  .section-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 16px; margin: 44px 0 16px; flex-wrap: wrap;
+  }
+  .section-head h2 { margin: 0; font-size: 14px; font-weight: 700; letter-spacing: .08em; color: var(--ink-3); }
+  .count { font-family: var(--font-mono); font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+  .tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .tool {
+    display: flex; flex-direction: column; gap: 9px; padding: 20px 20px 18px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  }
+  .tool-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .tool h3 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+  /* The repo name is shown in mono because it is literally what you type
+     after -Only. It is an identifier, not decoration. */
+  .repo { font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-3); }
+  .tool p { margin: 0; font-size: 14.5px; color: var(--ink-2); flex: 1; }
+
+  .meta {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding-top: 11px; border-top: 1px solid var(--line);
+    font-family: var(--font-mono); font-size: 12.5px; color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+  .meta .ver { color: var(--accent); font-weight: 600; }
+  .meta a { color: var(--ink-2); text-decoration: none; border-bottom: 1px solid var(--line); }
+  .meta a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  .meta .pending { opacity: .55; }
+
+  .note { margin-top: 36px; padding: 18px 20px; border-left: 2px solid var(--line); }
+  .note h2 { margin: 0 0 8px; font-size: 15px; font-weight: 700; }
+  .note p { margin: 0 0 8px; font-size: 14.5px; color: var(--ink-2); }
+  .note p:last-child { margin-bottom: 0; }
+  .note code { font-family: var(--font-mono); font-size: 13px; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+
+  footer { margin: 52px 0 40px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--ink-3); }
+  footer a { color: var(--ink-2); }
+
+  @media (max-width: 720px) { .tools { grid-template-columns: minmax(0, 1fr); } }
+  @media (prefers-reduced-motion: reduce) { .command button { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="topbar" aria-label="網站">
+    <a href="../" style="font-weight:700;color:inherit;text-decoration:none">Jeffrey Yellowman</a>
+    <div class="links"><a href="https://github.com/Jeffrey0117/mytoolbox">GitHub</a></div>
+  </nav>
+
+  <header class="hero">
+    <div class="eyebrow">mytoolbox</div>
+    <h1>新電腦，<br>一行就裝回我的工具。</h1>
+    <p class="lede">我自己做、自己每天用的 Windows 小工具。開 PowerShell 貼上這行，它會抓每個 app 的最新版、裝好、建好捷徑。不寫死版本號，所以這行指令不會過期。</p>
+
+    <div class="command">
+      <code id="cmd"><span class="prompt">PS&gt; </span>irm https://raw.githubusercontent.com/Jeffrey0117/mytoolbox/main/install.ps1 | iex</code>
+      <button id="copy" type="button">複製</button>
+    </div>
+    <p class="hint">只要其中幾個？先把檔案存下來，再 <code>.\install.ps1 -Only ReVid,DuckShot</code>。先看清單不安裝：<code>-List</code>。</p>
+  </header>
+
+  <section aria-labelledby="catalog">
+    <div class="section-head">
+      <h2 id="catalog">裡面有什麼</h2>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="tools" id="tools"></div>
+  </section>
+
+  <div class="note">
+    <h2>為什麼不寫版本號</h2>
+    <p>這頁的清單讀的是 <code>apps.json</code>，版本、檔案大小和發佈日期則是打開頁面時才去各個 repo 查最新的 release。</p>
+    <p>所以我發新版不用回來改這頁，加新 app 也只要動 <code>apps.json</code> 一個地方 —— 安裝腳本讀的是同一份。</p>
+  </div>
+
+  <footer>
+    全部開源在 <a href="https://github.com/Jeffrey0117">github.com/Jeffrey0117</a>。
+    想重建的是整套開發環境而不是這些 app？那是 <a href="https://github.com/Jeffrey0117/DevFault">DevFault</a>。
+  </footer>
+</div>
+
+<script>
+const OWNER = 'Jeffrey0117';
+const CATALOG = 'https://raw.githubusercontent.com/Jeffrey0117/mytoolbox/main/apps.json';
+const CACHE_KEY = 'mytoolbox-releases-v1';
+const CACHE_HOURS = 6;
+
+const el = (tag, cls, text) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+};
+
+document.getElementById('copy').addEventListener('click', async (e) => {
+  // The prompt is a label, not part of the command.
+  const line = document.getElementById('cmd').textContent.replace(/^PS>\s*/, '');
+  try {
+    await navigator.clipboard.writeText(line);
+    const b = e.currentTarget;
+    b.textContent = '已複製';
+    b.dataset.done = '1';
+    setTimeout(() => { b.textContent = '複製'; delete b.dataset.done; }, 1800);
+  } catch (err) {
+    // Clipboard refused (insecure context, or permission): select it so the
+    // keyboard still works rather than leaving the button dead.
+    const r = document.createRange();
+    r.selectNodeContents(document.getElementById('cmd'));
+    const s = getSelection();
+    s.removeAllRanges();
+    s.addRange(r);
+  }
+});
+
+// Release data is read per repo, which is eight requests. GitHub allows 60
+// an hour unauthenticated, so the answers are kept for a few hours — a
+// reload should not spend the budget again.
+function readCache() {
+  try {
+    const c = JSON.parse(localStorage.getItem(CACHE_KEY) || '{}');
+    if (!c.at || Date.now() - c.at > CACHE_HOURS * 3600e3) return null;
+    return c.data || null;
+  } catch (e) { return null; }
+}
+function writeCache(data) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), data })); } catch (e) {}
+}
+
+const mb = (bytes) => Math.round(bytes / 1048576) + ' MB';
+
+async function latestRelease(repo) {
+  const res = await fetch(`https://api.github.com/repos/${OWNER}/${repo}/releases/latest`);
+  if (!res.ok) throw new Error(String(res.status));
+  const rel = await res.json();
+  const exes = (rel.assets || []).filter(a => /\.exe$/i.test(a.name));
+  const pick = exes.find(a => /portable/i.test(a.name))
+    || exes.find(a => /setup|install/i.test(a.name))
+    || exes[0];
+  return {
+    tag: rel.tag_name,
+    date: (rel.published_at || '').slice(0, 10),
+    size: pick ? mb(pick.size) : null,
+    url: pick ? pick.browser_download_url : rel.html_url,
+    kind: !pick ? null : /portable/i.test(pick.name) ? '免安裝' : '安裝版'
+  };
+}
+
+function render(apps) {
+  const host = document.getElementById('tools');
+  host.textContent = '';
+  document.getElementById('count').textContent = apps.length + ' 個';
+
+  const cards = new Map();
+  for (const app of apps) {
+    const card = el('article', 'tool');
+
+    const top = el('div', 'tool-top');
+    top.append(el('h3', null, app.name), el('span', 'repo', app.repo));
+    card.append(top);
+
+    card.append(el('p', null, (app.tagline && app.tagline.zh) || ''));
+
+    const meta = el('div', 'meta');
+    meta.append(el('span', 'pending', '查詢版本中…'));
+    card.append(meta);
+
+    host.append(card);
+    cards.set(app.repo, meta);
+  }
+  return cards;
+}
+
+function fillMeta(meta, info, repo) {
+  meta.textContent = '';
+  if (!info) {
+    const a = el('a', null, '到 GitHub 下載');
+    a.href = `https://github.com/${OWNER}/${repo}/releases/latest`;
+    meta.append(a);
+    return;
+  }
+  meta.append(el('span', 'ver', info.tag));
+  if (info.kind) meta.append(el('span', null, info.kind));
+  if (info.size) meta.append(el('span', null, info.size));
+  if (info.date) meta.append(el('span', null, info.date));
+  const a = el('a', null, '下載');
+  a.href = info.url;
+  meta.append(a);
+}
+
+(async () => {
+  let catalog;
+  try {
+    catalog = await (await fetch(CATALOG)).json();
+  } catch (e) {
+    document.getElementById('tools').append(
+      el('p', 'hint', '讀不到工具清單，直接看 GitHub 上的 mytoolbox。')
+    );
+    return;
+  }
+
+  const apps = catalog.apps || [];
+  const cards = render(apps);
+
+  const cached = readCache();
+  if (cached) {
+    for (const app of apps) fillMeta(cards.get(app.repo), cached[app.repo], app.repo);
+    return;
+  }
+
+  const fresh = {};
+  await Promise.all(apps.map(async (app) => {
+    let info = null;
+    try { info = await latestRelease(app.repo); } catch (e) { info = null; }
+    fresh[app.repo] = info;
+    fillMeta(cards.get(app.repo), info, app.repo);
+  }));
+  writeCache(fresh);
+})();
+</script>
+</body>
+</html>
