@@ -10,11 +10,16 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
 <link rel="stylesheet" href="../assets/site.css">
 <style>
-  /* The command is the product, so it opens the page at full size rather
-     than sitting in a code block halfway down. */
-  .hero { padding-block: 52px 36px; max-width: 46em; }
-  .hero h1 { font-size: clamp(34px, 5.4vw, 52px); font-weight: 900; line-height: 1.15; letter-spacing: -0.02em; }
-  .hero .lede { margin-top: 18px; font-size: 18px; color: var(--ink-2); }
+  /* The shared stylesheet styles bare `section`, `code` and `footer`, and
+     its `.hero` is a two-column grid. Everything this page owns is
+     prefixed and sets its own display, so the page cannot be reshaped by
+     rules it does not control. */
+  .tb-hero {
+    display: block; padding-block: 52px 36px; max-width: 46em;
+  }
+  .tb-section { padding-block: 0; border-top: 0; }
+  .tb-hero h1 { font-size: clamp(34px, 5.4vw, 52px); font-weight: 900; line-height: 1.15; letter-spacing: -0.02em; }
+  .tb-hero .lede { margin-top: 18px; font-size: 18px; color: var(--ink-2); }
 
   .command {
     margin: 30px 0 10px; display: flex; align-items: stretch; gap: 0;
@@ -89,7 +94,7 @@
     <div class="links"><a href="https://github.com/Jeffrey0117/mytoolbox">GitHub</a></div>
   </nav>
 
-  <header class="hero">
+  <header class="tb-hero">
     <div class="eyebrow">mytoolbox</div>
     <h1>新電腦，<br>一行就裝回我的工具。</h1>
     <p class="lede">我自己做、自己每天用的 Windows 小工具。開 PowerShell 貼上這行，它會抓每個 app 的最新版、裝好、建好捷徑。不寫死版本號，所以這行指令不會過期。</p>
@@ -101,7 +106,7 @@
     <p class="hint">只要其中幾個？先把檔案存下來，再 <code>.\install.ps1 -Only ReVid,DuckShot</code>。先看清單不安裝：<code>-List</code>。</p>
   </header>
 
-  <section aria-labelledby="catalog">
+  <section class="tb-section" aria-labelledby="catalog">
     <div class="section-head">
       <h2 id="catalog">裡面有什麼</h2>
       <span class="count" id="count"></span>
