@@ -26,10 +26,13 @@
     border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
     background: var(--code-bg);
   }
+  /* Wraps rather than scrolls: this line is the whole point of the page,
+     and half of it behind a scrollbar is half a product. Selecting it by
+     hand is not the path anyway — that is what the button is for. */
   .command code {
-    flex: 1; min-width: 0; padding: 16px 18px;
-    font-family: var(--font-mono); font-size: 14.5px; line-height: 1.5;
-    overflow-x: auto; white-space: pre; color: var(--ink);
+    flex: 1; min-width: 0; padding: 15px 18px;
+    font-family: var(--font-mono); font-size: 14px; line-height: 1.55;
+    white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink);
   }
   .command .prompt { color: var(--ink-3); user-select: none; }
   .command button {
@@ -80,8 +83,14 @@
   .note p:last-child { margin-bottom: 0; }
   .note code { font-family: var(--font-mono); font-size: 13px; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
 
-  footer { margin: 52px 0 40px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13.5px; color: var(--ink-3); }
-  footer a { color: var(--ink-2); }
+  /* The shared footer is a space-between flex row, which pulled this
+     sentence apart at every link. It is prose, so it is laid out as prose. */
+  .tb-foot {
+    display: block; margin: 44px 0 40px; padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-size: 13.5px; line-height: 1.8; color: var(--ink-3); max-width: 46em;
+  }
+  .tb-foot a { color: var(--ink-2); }
 
   @media (max-width: 720px) { .tools { grid-template-columns: minmax(0, 1fr); } }
   @media (prefers-reduced-motion: reduce) { .command button { transition: none; } }
@@ -120,7 +129,7 @@
     <p>所以我發新版不用回來改這頁，加新 app 也只要動 <code>apps.json</code> 一個地方 —— 安裝腳本讀的是同一份。</p>
   </div>
 
-  <footer>
+  <footer class="tb-foot">
     全部開源在 <a href="https://github.com/Jeffrey0117">github.com/Jeffrey0117</a>。
     想重建的是整套開發環境而不是這些 app？那是 <a href="https://github.com/Jeffrey0117/DevFault">DevFault</a>。
   </footer>
